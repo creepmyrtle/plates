@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #0F0F12;
+  --bg-secondary: #1A1A1F;
+  --bg-card: #222228;
+  --text-primary: #EAEAE8;
+  --text-secondary: #9A9A9A;
+  --border: #2E2E34;
+  --border-hover: #3d3c48;
+
+  --accent: #2563EB;
+  --success: #16A34A;
+  --warning: #D97706;
+  --danger: #DC2626;
+
+  --pillar-blue: #3B82F6;
+  --pillar-purple: #8B5CF6;
+  --pillar-green: #10B981;
+  --pillar-amber: #F59E0B;
+  --pillar-red: #EF4444;
+  --pillar-cyan: #06B6D4;
+  --pillar-pink: #EC4899;
+  --pillar-indigo: #6366F1;
+  --pillar-teal: #14B8A6;
+}
+
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-card: var(--bg-card);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-pillar-blue: var(--pillar-blue);
+  --color-pillar-purple: var(--pillar-purple);
+  --color-pillar-green: var(--pillar-green);
+  --color-pillar-amber: var(--pillar-amber);
+  --color-pillar-red: var(--pillar-red);
+  --color-pillar-cyan: var(--pillar-cyan);
+  --color-pillar-pink: var(--pillar-pink);
+  --color-pillar-indigo: var(--pillar-indigo);
+  --color-pillar-teal: var(--pillar-teal);
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Noise overlay for texture */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: border-color 0.3s ease, transform 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.card-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.card-hover:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+.card-hover:hover::before {
+  opacity: 1;
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fadeUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Swipe card animation */
+.card-completing {
+  opacity: 0;
+  max-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  transition:
+    opacity 200ms ease,
+    max-height 300ms ease 100ms,
+    margin 300ms ease 100ms,
+    padding 300ms ease 100ms;
+}
