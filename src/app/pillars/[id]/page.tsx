@@ -4,6 +4,8 @@ import { getTasksByPillarId } from '@/lib/db/tasks';
 import { getMilestonesByPillarId } from '@/lib/db/milestones';
 import PillarDetail from './PillarDetail';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ id: string }>;
 }

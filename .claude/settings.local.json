@@ -6,7 +6,8 @@
       "Bash(npx tsc:*)",
       "Bash(timeout 20 npx next dev:*)",
       "Bash(timeout 15 npx next dev:*)",
-      "Bash(timeout 12 npx next dev:*)"
+      "Bash(timeout 12 npx next dev:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

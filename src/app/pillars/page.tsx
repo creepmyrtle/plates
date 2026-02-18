@@ -2,6 +2,8 @@ import { getSessionUserId } from '@/lib/auth';
 import { getPillarsByUserId } from '@/lib/db/pillars';
 import PillarsList from './PillarsList';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PillarsPage() {
   const userId = await getSessionUserId();
   const pillars = await getPillarsByUserId(userId);

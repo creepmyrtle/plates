@@ -3,6 +3,8 @@ import { getDefaultUser } from '@/lib/db/users';
 import { seedDatabase } from '@/lib/db/seed';
 import OnboardingWizard from '@/components/OnboardingWizard';
 
+export const dynamic = 'force-dynamic';
+
 export default async function OnboardingPage() {
   await seedDatabase();
   const user = await getDefaultUser();
