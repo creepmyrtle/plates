@@ -36,6 +36,11 @@ interface Stats {
 export default function DashboardView() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { theme, toggle: toggleTheme } = useTheme();
+  const { showToast } = useToast();
+  const router = useRouter();
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     fetch('/api/user/stats')
@@ -66,12 +71,6 @@ export default function DashboardView() {
       </div>
     );
   }
-
-  const { theme, toggle: toggleTheme } = useTheme();
-  const { showToast } = useToast();
-  const router = useRouter();
-  const [confirmReset, setConfirmReset] = useState(false);
-  const [resetting, setResetting] = useState(false);
 
   const handleReset = async () => {
     if (!confirmReset) {
