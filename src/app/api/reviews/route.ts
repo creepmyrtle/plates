@@ -7,9 +7,9 @@ export async function POST(request: Request) {
     const userId = await getSessionUserId();
     const body = await request.json();
 
-    if (!body.mood || !body.pillarRatings) {
+    if (!body.mood || !body.plateRatings) {
       return NextResponse.json(
-        { error: { code: 'VALIDATION', message: 'mood and pillarRatings are required' } },
+        { error: { code: 'VALIDATION', message: 'mood and plateRatings are required' } },
         { status: 400 }
       );
     }
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       date: body.date || today,
       mood: body.mood,
       notes: body.notes,
-      pillarRatings: body.pillarRatings,
+      plateRatings: body.plateRatings,
     });
 
     return NextResponse.json({ data: review }, { status: 201 });

@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import type { Review, PillarReviewRating } from '@/lib/types';
+import type { Review, PlateReviewRating } from '@/lib/types';
 import { getDb } from './index';
 
 export async function getRecentReviews(userId: string, limit: number = 7): Promise<Review[]> {
@@ -25,17 +25,17 @@ export async function getReviewByDate(userId: string, date: string): Promise<Rev
 export async function getReviewWithRatings(
   userId: string,
   date: string
-): Promise<{ review: Review; ratings: PillarReviewRating[] } | null> {
+): Promise<{ review: Review; ratings: PlateReviewRating[] } | null> {
   await getDb();
   const review = await getReviewByDate(userId, date);
   if (!review) return null;
 
   const { rows } = await sql`
-    SELECT * FROM pillar_review_ratings
+    SELECT * FROM plate_review_ratings
     WHERE review_id = ${review.id}
   `;
 
-  return { review, ratings: rows as PillarReviewRating[] };
+  return { review, ratings: rows as PlateReviewRating[] };
 }
 
 export async function createReview(data: {
@@ -43,7 +43,7 @@ export async function createReview(data: {
   date: string;
   mood: number;
   notes?: string;
-  pillarRatings: { pillarId: string; rating: number; note?: string }[];
+  plateRatings: { plateId: string; rating: number; note?: string }[];
 }): Promise<Review> {
   await getDb();
 
@@ -58,12 +58,12 @@ export async function createReview(data: {
   `;
   const review = rows[0] as Review;
 
-  // Upsert pillar ratings
-  for (const rating of data.pillarRatings) {
+  // Upsert plate ratings
+  for (const rating of data.plateRatings) {
     await sql`
-      INSERT INTO pillar_review_ratings (review_id, pillar_id, rating, note)
-      VALUES (${review.id}, ${rating.pillarId}, ${rating.rating}, ${rating.note || null})
-      ON CONFLICT (review_id, pillar_id) DO UPDATE SET
+      INSERT INTO plate_review_ratings (review_id, plate_id, rating, note)
+      VALUES (${review.id}, ${rating.plateId}, ${rating.rating}, ${rating.note || null})
+      ON CONFLICT (review_id, plate_id) DO UPDATE SET
         rating = ${rating.rating},
         note = ${rating.note || null}
     `;
@@ -75,16 +75,16 @@ export async function createReview(data: {
 export async function getReviewHistory(
   userId: string,
   limit: number = 30
-): Promise<(Review & { pillar_ratings: PillarReviewRating[] })[]> {
+): Promise<(Review & { plate_ratings: PlateReviewRating[] })[]> {
   await getDb();
   const reviews = await getRecentReviews(userId, limit);
 
   const result = [];
   for (const review of reviews) {
     const { rows } = await sql`
-      SELECT * FROM pillar_review_ratings WHERE review_id = ${review.id}
+      SELECT * FROM plate_review_ratings WHERE review_id = ${review.id}
     `;
-    result.push({ ...review, pillar_ratings: rows as PillarReviewRating[] });
+    result.push({ ...review, plate_ratings: rows as PlateReviewRating[] });
   }
 
   return result;

@@ -25,15 +25,15 @@ export async function getPlanItemsWithTasks(planId: string): Promise<PlanItemWit
   const { rows } = await sql`
     SELECT
       pi.*,
-      t.pillar_id, t.title, t.description, t.status AS task_status,
+      t.plate_id, t.title, t.description, t.status AS task_status,
       t.priority, t.effort_minutes, t.energy_level, t.context,
       t.time_preference, t.due_date, t.is_recurring, t.recurrence_rule,
       t.next_occurrence, t.completed_at AS task_completed_at,
-      p.color AS pillar_color,
-      p.name AS pillar_name
+      p.color AS plate_color,
+      p.name AS plate_name
     FROM plan_items pi
     JOIN tasks t ON pi.task_id = t.id
-    JOIN pillars p ON t.pillar_id = p.id
+    JOIN plates p ON t.plate_id = p.id
     WHERE pi.daily_plan_id = ${planId}
     ORDER BY pi.sort_order ASC
   `;
@@ -49,7 +49,7 @@ export async function getPlanItemsWithTasks(planId: string): Promise<PlanItemWit
     skipped: row.skipped,
     task: {
       id: row.task_id,
-      pillar_id: row.pillar_id,
+      plate_id: row.plate_id,
       title: row.title,
       description: row.description,
       status: row.task_status,
@@ -67,8 +67,8 @@ export async function getPlanItemsWithTasks(planId: string): Promise<PlanItemWit
       created_at: row.created_at,
       updated_at: row.updated_at,
     },
-    pillar_color: row.pillar_color,
-    pillar_name: row.pillar_name,
+    plate_color: row.plate_color,
+    plate_name: row.plate_name,
   })) as PlanItemWithTask[];
 }
 
@@ -141,19 +141,19 @@ export async function skipPlanItem(itemId: string): Promise<PlanItem | null> {
 export async function getRecentCompletions(
   userId: string,
   days: number = 7
-): Promise<{ pillarId: string; completedAt: Date }[]> {
+): Promise<{ plateId: string; completedAt: Date }[]> {
   await getDb();
   const { rows } = await sql`
-    SELECT t.pillar_id, t.completed_at
+    SELECT t.plate_id, t.completed_at
     FROM tasks t
-    JOIN pillars p ON t.pillar_id = p.id
+    JOIN plates p ON t.plate_id = p.id
     WHERE p.user_id = ${userId}
       AND t.completed_at IS NOT NULL
       AND t.completed_at >= now() - make_interval(days => ${days})
     ORDER BY t.completed_at DESC
   `;
   return rows.map((r) => ({
-    pillarId: r.pillar_id,
+    plateId: r.plate_id,
     completedAt: new Date(r.completed_at),
   }));
 }

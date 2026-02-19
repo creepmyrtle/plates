@@ -21,9 +21,9 @@ export async function ensureSchema(): Promise<void> {
     )
   `;
 
-  // Pillars
+  // Plates
   await sql`
-    CREATE TABLE IF NOT EXISTS pillars (
+    CREATE TABLE IF NOT EXISTS plates (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
       user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
@@ -37,13 +37,13 @@ export async function ensureSchema(): Promise<void> {
       updated_at TIMESTAMPTZ DEFAULT now()
     )
   `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_pillars_user_status ON pillars(user_id, status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_plates_user_status ON plates(user_id, status)`;
 
   // Milestones
   await sql`
     CREATE TABLE IF NOT EXISTS milestones (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      pillar_id TEXT REFERENCES pillars(id) ON DELETE CASCADE,
+      plate_id TEXT REFERENCES plates(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       description TEXT,
       target_date DATE,
@@ -54,13 +54,13 @@ export async function ensureSchema(): Promise<void> {
       updated_at TIMESTAMPTZ DEFAULT now()
     )
   `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_milestones_pillar ON milestones(pillar_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_milestones_plate ON milestones(plate_id)`;
 
   // Tasks
   await sql`
     CREATE TABLE IF NOT EXISTS tasks (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      pillar_id TEXT REFERENCES pillars(id) ON DELETE CASCADE,
+      plate_id TEXT REFERENCES plates(id) ON DELETE CASCADE,
       title TEXT NOT NULL,
       description TEXT,
       status TEXT NOT NULL DEFAULT 'pending',
@@ -79,7 +79,7 @@ export async function ensureSchema(): Promise<void> {
       updated_at TIMESTAMPTZ DEFAULT now()
     )
   `;
-  await sql`CREATE INDEX IF NOT EXISTS idx_tasks_pillar_status ON tasks(pillar_id, status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_tasks_plate_status ON tasks(plate_id, status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_status_due ON tasks(status, due_date)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_next_occurrence ON tasks(next_occurrence)`;
 
@@ -127,15 +127,15 @@ export async function ensureSchema(): Promise<void> {
     )
   `;
 
-  // Pillar Review Ratings
+  // Plate Review Ratings
   await sql`
-    CREATE TABLE IF NOT EXISTS pillar_review_ratings (
+    CREATE TABLE IF NOT EXISTS plate_review_ratings (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
       review_id TEXT REFERENCES reviews(id) ON DELETE CASCADE,
-      pillar_id TEXT REFERENCES pillars(id) ON DELETE CASCADE,
+      plate_id TEXT REFERENCES plates(id) ON DELETE CASCADE,
       rating INTEGER NOT NULL,
       note TEXT,
-      UNIQUE(review_id, pillar_id)
+      UNIQUE(review_id, plate_id)
     )
   `;
 }

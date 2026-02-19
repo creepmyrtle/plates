@@ -4,8 +4,8 @@
 
 // --- Enums / Literal Unions ---
 
-export type PillarType = 'ongoing' | 'goal';
-export type PillarStatus = 'active' | 'completed' | 'archived';
+export type PlateType = 'ongoing' | 'goal';
+export type PlateStatus = 'active' | 'completed' | 'archived';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
@@ -36,15 +36,15 @@ export interface User {
   updated_at: string;
 }
 
-export interface Pillar {
+export interface Plate {
   id: string;
   user_id: string;
   name: string;
   description: string | null;
   icon: string | null;
   color: string;
-  type: PillarType;
-  status: PillarStatus;
+  type: PlateType;
+  status: PlateStatus;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -52,7 +52,7 @@ export interface Pillar {
 
 export interface Milestone {
   id: string;
-  pillar_id: string;
+  plate_id: string;
   name: string;
   description: string | null;
   target_date: string | null;
@@ -73,7 +73,7 @@ export interface RecurrenceRule {
 
 export interface Task {
   id: string;
-  pillar_id: string;
+  plate_id: string;
   title: string;
   description: string | null;
   status: TaskStatus;
@@ -122,17 +122,17 @@ export interface Review {
   created_at: string;
 }
 
-export interface PillarReviewRating {
+export interface PlateReviewRating {
   id: string;
   review_id: string;
-  pillar_id: string;
+  plate_id: string;
   rating: number;
   note: string | null;
 }
 
 // --- Extended / Joined Types ---
 
-export interface PillarWithCounts extends Pillar {
+export interface PlateWithCounts extends Plate {
   task_count: number;
   pending_count: number;
   completed_count: number;
@@ -141,8 +141,8 @@ export interface PillarWithCounts extends Pillar {
 
 export interface PlanItemWithTask extends PlanItem {
   task: Task;
-  pillar_color: string;
-  pillar_name: string;
+  plate_color: string;
+  plate_name: string;
 }
 
 // --- API Response Types ---
@@ -165,9 +165,9 @@ export interface PlanGeneratorInput {
   user: User;
   date: Date;
   tasks: Task[];
-  pillars: Pillar[];
+  plates: Plate[];
   recentReviews: Review[];
-  recentCompletions: { pillarId: string; completedAt: Date }[];
+  recentCompletions: { plateId: string; completedAt: Date }[];
 }
 
 export interface GeneratedPlan {

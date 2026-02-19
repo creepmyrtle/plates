@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getMilestonesByPillarId, createMilestone } from '@/lib/db/milestones';
-import { getPillarById } from '@/lib/db/pillars';
+import { getMilestonesByPlateId, createMilestone } from '@/lib/db/milestones';
+import { getPlateById } from '@/lib/db/plates';
 
 export async function GET(
   _request: Request,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const milestones = await getMilestonesByPillarId(id);
+    const milestones = await getMilestonesByPlateId(id);
     return NextResponse.json({ data: milestones });
   } catch {
     return NextResponse.json(
@@ -26,10 +26,10 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
-    const pillar = await getPillarById(id);
-    if (!pillar) {
+    const plate = await getPlateById(id);
+    if (!plate) {
       return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Pillar not found' } },
+        { error: { code: 'NOT_FOUND', message: 'Plate not found' } },
         { status: 404 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(
     }
 
     const milestone = await createMilestone({
-      pillar_id: id,
+      plate_id: id,
       name: body.name,
       description: body.description,
       target_date: body.target_date,

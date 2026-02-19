@@ -3,20 +3,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/Toast';
-import type { Pillar, PlanItemWithTask } from '@/lib/types';
+import type { Plate, PlanItemWithTask } from '@/lib/types';
 
 interface Props {
-  pillars: Pillar[];
+  plates: Plate[];
   incompleteItems: PlanItemWithTask[];
 }
 
-interface PillarRating {
-  pillarId: string;
+interface PlateRating {
+  plateId: string;
   rating: number;
   note: string;
 }
 
-export default function ReviewFlow({ pillars, incompleteItems }: Props) {
+export default function ReviewFlow({ plates, incompleteItems }: Props) {
   const router = useRouter();
   const { showToast } = useToast();
   const [step, setStep] = useState(0);
@@ -26,9 +26,9 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
   const [mood, setMood] = useState(0);
   const [notes, setNotes] = useState('');
 
-  // Step 2: Pillar ratings
-  const [pillarRatings, setPillarRatings] = useState<PillarRating[]>(
-    pillars.map((p) => ({ pillarId: p.id, rating: 0, note: '' }))
+  // Step 2: Plate ratings
+  const [plateRatings, setPlateRatings] = useState<PlateRating[]>(
+    plates.map((p) => ({ plateId: p.id, rating: 0, note: '' }))
   );
 
   // Step 3: Incomplete task decisions
@@ -36,21 +36,21 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
 
   // Step 4: New tasks via quick add
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskPillar, setNewTaskPillar] = useState(pillars[0]?.id || '');
-  const [addedTasks, setAddedTasks] = useState<{ title: string; pillarName: string }[]>([]);
+  const [newTaskPlate, setNewTaskPlate] = useState(plates[0]?.id || '');
+  const [addedTasks, setAddedTasks] = useState<{ title: string; plateName: string }[]>([]);
 
   const totalSteps = 5;
   const progress = ((step + 1) / totalSteps) * 100;
 
-  const setPillarRating = useCallback((pillarId: string, rating: number) => {
-    setPillarRatings((prev) =>
-      prev.map((r) => (r.pillarId === pillarId ? { ...r, rating } : r))
+  const setPlateRating = useCallback((plateId: string, rating: number) => {
+    setPlateRatings((prev) =>
+      prev.map((r) => (r.plateId === plateId ? { ...r, rating } : r))
     );
   }, []);
 
-  const setPillarNote = useCallback((pillarId: string, note: string) => {
-    setPillarRatings((prev) =>
-      prev.map((r) => (r.pillarId === pillarId ? { ...r, note } : r))
+  const setPlateNote = useCallback((plateId: string, note: string) => {
+    setPlateRatings((prev) =>
+      prev.map((r) => (r.plateId === plateId ? { ...r, note } : r))
     );
   }, []);
 
@@ -59,18 +59,18 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
   }, []);
 
   const handleAddTask = async () => {
-    if (!newTaskTitle.trim() || !newTaskPillar) return;
+    if (!newTaskTitle.trim() || !newTaskPlate) return;
 
     try {
       const res = await fetch('/api/tasks/quick-add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTaskTitle.trim(), pillar_id: newTaskPillar }),
+        body: JSON.stringify({ title: newTaskTitle.trim(), plate_id: newTaskPlate }),
       });
 
       if (res.ok) {
-        const pillarName = pillars.find((p) => p.id === newTaskPillar)?.name || '';
-        setAddedTasks((prev) => [...prev, { title: newTaskTitle.trim(), pillarName }]);
+        const plateName = plates.find((p) => p.id === newTaskPlate)?.name || '';
+        setAddedTasks((prev) => [...prev, { title: newTaskTitle.trim(), plateName }]);
         setNewTaskTitle('');
         showToast('Task added', 'success');
       }
@@ -89,10 +89,10 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
         body: JSON.stringify({
           mood,
           notes: notes.trim() || undefined,
-          pillarRatings: pillarRatings
+          plateRatings: plateRatings
             .filter((r) => r.rating > 0)
             .map((r) => ({
-              pillarId: r.pillarId,
+              plateId: r.plateId,
               rating: r.rating,
               note: r.note.trim() || undefined,
             })),
@@ -181,32 +181,32 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
           </div>
         )}
 
-        {/* Step 2: Pillar Ratings */}
+        {/* Step 2: Plate Ratings */}
         {step === 1 && (
           <div className="animate-fade-up">
-            <StepHeader step={2} title="Pillar Check-in" subtitle="How did each area of your life feel today?" />
+            <StepHeader step={2} title="Plate Check-in" subtitle="How did each area of your life feel today?" />
 
             <div className="mt-6 space-y-4">
-              {pillars.map((pillar) => {
-                const rating = pillarRatings.find((r) => r.pillarId === pillar.id);
+              {plates.map((plate) => {
+                const rating = plateRatings.find((r) => r.plateId === plate.id);
                 return (
-                  <div key={pillar.id} className="rounded-lg border border-border bg-bg-card p-4">
+                  <div key={plate.id} className="rounded-lg border border-border bg-bg-card p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: pillar.color }} />
-                      <span className="font-medium text-sm">{pillar.name}</span>
+                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: plate.color }} />
+                      <span className="font-medium text-sm">{plate.name}</span>
                     </div>
 
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((value) => (
                         <button
                           key={value}
-                          onClick={() => setPillarRating(pillar.id, value)}
+                          onClick={() => setPlateRating(plate.id, value)}
                           className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-mono font-semibold transition-all ${
                             rating?.rating === value
                               ? 'text-white'
                               : 'border border-border text-text-secondary hover:border-border-hover'
                           }`}
-                          style={rating?.rating === value ? { backgroundColor: pillar.color } : undefined}
+                          style={rating?.rating === value ? { backgroundColor: plate.color } : undefined}
                         >
                           {value}
                         </button>
@@ -216,7 +216,7 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
                     <input
                       type="text"
                       value={rating?.note || ''}
-                      onChange={(e) => setPillarNote(pillar.id, e.target.value)}
+                      onChange={(e) => setPlateNote(plate.id, e.target.value)}
                       placeholder="Quick note (optional)"
                       className="mt-2 w-full rounded border border-border bg-bg-secondary px-3 py-1.5 text-xs text-text-primary placeholder:text-text-secondary focus:border-accent focus:outline-none"
                     />
@@ -247,12 +247,12 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
                   <div
                     key={item.id}
                     className="rounded-lg border border-border bg-bg-card p-3"
-                    style={{ borderLeftWidth: '3px', borderLeftColor: item.pillar_color }}
+                    style={{ borderLeftWidth: '3px', borderLeftColor: item.plate_color }}
                   >
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-sm font-medium">{item.task.title}</span>
-                        <span className="ml-2 text-xs text-text-secondary">{item.pillar_name}</span>
+                        <span className="ml-2 text-xs text-text-secondary">{item.plate_name}</span>
                       </div>
                     </div>
                     <div className="mt-2 flex gap-2">
@@ -317,18 +317,18 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
                 </button>
               </div>
 
-              {pillars.length > 0 && (
+              {plates.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {pillars.map((p) => (
+                  {plates.map((p) => (
                     <button
                       key={p.id}
-                      onClick={() => setNewTaskPillar(p.id)}
+                      onClick={() => setNewTaskPlate(p.id)}
                       className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                        newTaskPillar === p.id
+                        newTaskPlate === p.id
                           ? 'border-transparent text-white'
                           : 'border-border text-text-secondary'
                       }`}
-                      style={newTaskPillar === p.id ? { backgroundColor: p.color } : undefined}
+                      style={newTaskPlate === p.id ? { backgroundColor: p.color } : undefined}
                     >
                       {p.name}
                     </button>
@@ -345,7 +345,7 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
                         <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                       </svg>
                       <span>{t.title}</span>
-                      <span className="text-text-secondary">({t.pillarName})</span>
+                      <span className="text-text-secondary">({t.plateName})</span>
                     </div>
                   ))}
                 </div>
@@ -372,18 +372,18 @@ export default function ReviewFlow({ pillars, incompleteItems }: Props) {
                 {notes && <p className="mt-1 text-xs text-text-secondary">{notes}</p>}
               </div>
 
-              {/* Pillar ratings */}
+              {/* Plate ratings */}
               <div className="rounded-lg border border-border bg-bg-card p-4">
-                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Pillar Ratings</h3>
+                <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Plate Ratings</h3>
                 <div className="mt-2 space-y-1.5">
-                  {pillarRatings.filter((r) => r.rating > 0).map((r) => {
-                    const pillar = pillars.find((p) => p.id === r.pillarId);
-                    if (!pillar) return null;
+                  {plateRatings.filter((r) => r.rating > 0).map((r) => {
+                    const plate = plates.find((p) => p.id === r.plateId);
+                    if (!plate) return null;
                     return (
-                      <div key={r.pillarId} className="flex items-center justify-between text-sm">
+                      <div key={r.plateId} className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: pillar.color }} />
-                          <span>{pillar.name}</span>
+                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: plate.color }} />
+                          <span>{plate.name}</span>
                         </div>
                         <span className="font-mono font-semibold">{r.rating}/5</span>
                       </div>

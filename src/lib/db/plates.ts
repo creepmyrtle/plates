@@ -1,8 +1,8 @@
 import { sql } from '@vercel/postgres';
-import type { Pillar, PillarWithCounts } from '@/lib/types';
+import type { Plate, PlateWithCounts } from '@/lib/types';
 import { getDb } from './index';
 
-export async function getPillarsByUserId(userId: string): Promise<PillarWithCounts[]> {
+export async function getPlatesByUserId(userId: string): Promise<PlateWithCounts[]> {
   await getDb();
   const { rows } = await sql`
     SELECT
@@ -10,42 +10,42 @@ export async function getPillarsByUserId(userId: string): Promise<PillarWithCoun
       COALESCE(tc.task_count, 0)::int AS task_count,
       COALESCE(tc.pending_count, 0)::int AS pending_count,
       COALESCE(tc.completed_count, 0)::int AS completed_count
-    FROM pillars p
+    FROM plates p
     LEFT JOIN (
       SELECT
-        pillar_id,
+        plate_id,
         COUNT(*)::int AS task_count,
         COUNT(*) FILTER (WHERE status = 'pending' OR status = 'in_progress')::int AS pending_count,
         COUNT(*) FILTER (WHERE status = 'completed')::int AS completed_count
       FROM tasks
-      GROUP BY pillar_id
-    ) tc ON tc.pillar_id = p.id
+      GROUP BY plate_id
+    ) tc ON tc.plate_id = p.id
     WHERE p.user_id = ${userId} AND p.status != 'archived'
     ORDER BY p.sort_order ASC, p.created_at ASC
   `;
-  return rows as PillarWithCounts[];
+  return rows as PlateWithCounts[];
 }
 
-export async function getPillarById(id: string): Promise<Pillar | null> {
+export async function getPlateById(id: string): Promise<Plate | null> {
   await getDb();
-  const { rows } = await sql`SELECT * FROM pillars WHERE id = ${id}`;
-  return (rows[0] as Pillar) ?? null;
+  const { rows } = await sql`SELECT * FROM plates WHERE id = ${id}`;
+  return (rows[0] as Plate) ?? null;
 }
 
-export async function createPillar(
+export async function createPlate(
   userId: string,
   data: { name: string; color: string; type?: string; description?: string; icon?: string }
-): Promise<Pillar> {
+): Promise<Plate> {
   await getDb();
   // Get next sort order
   const { rows: countRows } = await sql`
     SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order
-    FROM pillars WHERE user_id = ${userId}
+    FROM plates WHERE user_id = ${userId}
   `;
   const sortOrder = countRows[0]?.next_order ?? 0;
 
   const { rows } = await sql`
-    INSERT INTO pillars (user_id, name, color, type, description, icon, sort_order)
+    INSERT INTO plates (user_id, name, color, type, description, icon, sort_order)
     VALUES (
       ${userId},
       ${data.name},
@@ -57,13 +57,13 @@ export async function createPillar(
     )
     RETURNING *
   `;
-  return rows[0] as Pillar;
+  return rows[0] as Plate;
 }
 
-export async function updatePillar(
+export async function updatePlate(
   id: string,
-  data: Partial<Pick<Pillar, 'name' | 'color' | 'type' | 'description' | 'icon' | 'status'>>
-): Promise<Pillar | null> {
+  data: Partial<Pick<Plate, 'name' | 'color' | 'type' | 'description' | 'icon' | 'status'>>
+): Promise<Plate | null> {
   await getDb();
 
   const setClauses: string[] = [];
@@ -78,31 +78,31 @@ export async function updatePillar(
     }
   }
 
-  if (setClauses.length === 0) return getPillarById(id);
+  if (setClauses.length === 0) return getPlateById(id);
 
   setClauses.push(`updated_at = now()`);
   values.push(id);
 
-  const query = `UPDATE pillars SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+  const query = `UPDATE plates SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
   const { rows } = await sql.query(query, values);
-  return (rows[0] as Pillar) ?? null;
+  return (rows[0] as Plate) ?? null;
 }
 
-export async function archivePillar(id: string): Promise<Pillar | null> {
+export async function archivePlate(id: string): Promise<Plate | null> {
   await getDb();
   const { rows } = await sql`
-    UPDATE pillars SET status = 'archived', updated_at = now()
+    UPDATE plates SET status = 'archived', updated_at = now()
     WHERE id = ${id}
     RETURNING *
   `;
-  return (rows[0] as Pillar) ?? null;
+  return (rows[0] as Plate) ?? null;
 }
 
-export async function reorderPillars(userId: string, ids: string[]): Promise<void> {
+export async function reorderPlates(userId: string, ids: string[]): Promise<void> {
   await getDb();
   for (let i = 0; i < ids.length; i++) {
     await sql`
-      UPDATE pillars SET sort_order = ${i}, updated_at = now()
+      UPDATE plates SET sort_order = ${i}, updated_at = now()
       WHERE id = ${ids[i]} AND user_id = ${userId}
     `;
   }

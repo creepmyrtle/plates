@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
-import { getPlanByUserAndDate, getPlanItemsWithTasks, createPlan, getRecentCompletions } from '@/lib/db/plans';
-import { getTasksByUserId } from '@/lib/db/tasks';
-import { getPillarsByUserId } from '@/lib/db/pillars';
-import { getRecentReviews } from '@/lib/db/reviews';
-import { getUserById } from '@/lib/db/users';
-import { generateDailyPlan } from '@/lib/plan-generator';
+import { getPlanByUserAndDate, getPlanItemsWithTasks } from '@/lib/db/plans';
+import { generatePlanForUser } from '@/lib/db/plan-operations';
 
 export async function GET() {
   try {
@@ -17,7 +13,7 @@ export async function GET() {
 
     // Generate if none exists
     if (!plan) {
-      plan = await generateAndSavePlan(userId, today);
+      plan = await generatePlanForUser(userId, today);
     }
 
     if (!plan) {
@@ -33,40 +29,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
-async function generateAndSavePlan(userId: string, date: string) {
-  const user = await getUserById(userId);
-  if (!user) return null;
-
-  const [tasks, pillarRows, recentReviews, recentCompletions] = await Promise.all([
-    getTasksByUserId(userId),
-    getPillarsByUserId(userId),
-    getRecentReviews(userId),
-    getRecentCompletions(userId),
-  ]);
-
-  const pillars = pillarRows.map((p) => ({
-    ...p,
-    // Strip extra fields from PillarWithCounts to match Pillar type
-  }));
-
-  const generated = generateDailyPlan({
-    user,
-    date: new Date(date + 'T00:00:00'),
-    tasks,
-    pillars,
-    recentReviews,
-    recentCompletions,
-  });
-
-  if (generated.items.length === 0) return null;
-
-  return createPlan({
-    userId,
-    date,
-    dayType: generated.dayType,
-    availableMinutes: generated.availableMinutes,
-    items: generated.items,
-  });
 }

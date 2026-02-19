@@ -2,11 +2,11 @@ import { sql } from '@vercel/postgres';
 import type { Milestone } from '@/lib/types';
 import { getDb } from './index';
 
-export async function getMilestonesByPillarId(pillarId: string): Promise<Milestone[]> {
+export async function getMilestonesByPlateId(plateId: string): Promise<Milestone[]> {
   await getDb();
   const { rows } = await sql`
     SELECT * FROM milestones
-    WHERE pillar_id = ${pillarId}
+    WHERE plate_id = ${plateId}
     ORDER BY sort_order ASC, created_at ASC
   `;
   return rows as Milestone[];
@@ -19,7 +19,7 @@ export async function getMilestoneById(id: string): Promise<Milestone | null> {
 }
 
 export async function createMilestone(data: {
-  pillar_id: string;
+  plate_id: string;
   name: string;
   description?: string;
   target_date?: string;
@@ -27,14 +27,14 @@ export async function createMilestone(data: {
   await getDb();
   const { rows: countRows } = await sql`
     SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order
-    FROM milestones WHERE pillar_id = ${data.pillar_id}
+    FROM milestones WHERE plate_id = ${data.plate_id}
   `;
   const sortOrder = countRows[0]?.next_order ?? 0;
 
   const { rows } = await sql`
-    INSERT INTO milestones (pillar_id, name, description, target_date, sort_order)
+    INSERT INTO milestones (plate_id, name, description, target_date, sort_order)
     VALUES (
-      ${data.pillar_id},
+      ${data.plate_id},
       ${data.name},
       ${data.description || null},
       ${data.target_date || null},

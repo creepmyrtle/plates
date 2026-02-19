@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { getSessionUserId } from '@/lib/auth';
-import { getPillarsByUserId } from '@/lib/db/pillars';
+import { getPlatesByUserId } from '@/lib/db/plates';
 import { getRecentCompletions } from '@/lib/db/plans';
 import { getReviewStreak } from '@/lib/db/reviews';
-import { calculatePillarHealth } from '@/lib/pillar-health';
+import { calculatePlateHealth } from '@/lib/plate-health';
 import { getDb } from '@/lib/db/index';
 
 export async function GET() {
@@ -12,8 +12,8 @@ export async function GET() {
     const userId = await getSessionUserId();
     await getDb();
 
-    const [pillars, recentCompletions, reviewStreak] = await Promise.all([
-      getPillarsByUserId(userId),
+    const [plates, recentCompletions, reviewStreak] = await Promise.all([
+      getPlatesByUserId(userId),
       getRecentCompletions(userId, 7),
       getReviewStreak(userId),
     ]);
@@ -24,7 +24,7 @@ export async function GET() {
         COUNT(*) FILTER (WHERE t.status = 'completed')::int AS completed_this_week,
         COUNT(*)::int AS total_tasks
       FROM tasks t
-      JOIN pillars p ON t.pillar_id = p.id
+      JOIN plates p ON t.plate_id = p.id
       WHERE p.user_id = ${userId}
     `;
 
@@ -43,7 +43,7 @@ export async function GET() {
     // Overdue tasks
     const { rows: overdueRows } = await sql`
       SELECT COUNT(*)::int AS count FROM tasks t
-      JOIN pillars p ON t.pillar_id = p.id
+      JOIN plates p ON t.plate_id = p.id
       WHERE p.user_id = ${userId}
         AND t.status != 'completed'
         AND t.due_date < ${today}
@@ -55,9 +55,9 @@ export async function GET() {
     const sevenDaysStr = sevenDaysOut.toISOString().split('T')[0];
 
     const { rows: upcomingRows } = await sql`
-      SELECT t.id, t.title, t.due_date, t.priority, p.name AS pillar_name, p.color AS pillar_color
+      SELECT t.id, t.title, t.due_date, t.priority, p.name AS plate_name, p.color AS plate_color
       FROM tasks t
-      JOIN pillars p ON t.pillar_id = p.id
+      JOIN plates p ON t.plate_id = p.id
       WHERE p.user_id = ${userId}
         AND t.status != 'completed'
         AND t.due_date >= ${today}
@@ -66,14 +66,14 @@ export async function GET() {
       LIMIT 10
     `;
 
-    // Pillar health scores
-    const pillarHealth = pillars.map((p) => ({
+    // Plate health scores
+    const plateHealth = plates.map((p) => ({
       id: p.id,
       name: p.name,
       color: p.color,
-      health: calculatePillarHealth(
+      health: calculatePlateHealth(
         p.id,
-        [], // No per-pillar review ratings in this simplified query
+        [], // No per-plate review ratings in this simplified query
         recentCompletions
       ),
     }));
@@ -106,7 +106,7 @@ export async function GET() {
         },
         overdueCount: overdueRows[0]?.count ?? 0,
         upcomingDeadlines: upcomingRows,
-        pillarHealth,
+        plateHealth,
       },
     });
   } catch (e) {

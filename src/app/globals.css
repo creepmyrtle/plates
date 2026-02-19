@@ -14,15 +14,30 @@
   --warning: #D97706;
   --danger: #DC2626;
 
-  --pillar-blue: #3B82F6;
-  --pillar-purple: #8B5CF6;
-  --pillar-green: #10B981;
-  --pillar-amber: #F59E0B;
-  --pillar-red: #EF4444;
-  --pillar-cyan: #06B6D4;
-  --pillar-pink: #EC4899;
-  --pillar-indigo: #6366F1;
-  --pillar-teal: #14B8A6;
+  --plate-blue: #3B82F6;
+  --plate-purple: #8B5CF6;
+  --plate-green: #10B981;
+  --plate-amber: #F59E0B;
+  --plate-red: #EF4444;
+  --plate-cyan: #06B6D4;
+  --plate-pink: #EC4899;
+  --plate-indigo: #6366F1;
+  --plate-teal: #14B8A6;
+}
+
+[data-theme="light"] {
+  --bg-primary: #F5F5F7;
+  --bg-secondary: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --text-primary: #1A1A1F;
+  --text-secondary: #6B7280;
+  --border: #E5E7EB;
+  --border-hover: #D1D5DB;
+
+  --accent: #2563EB;
+  --success: #16A34A;
+  --warning: #D97706;
+  --danger: #DC2626;
 }
 
 @theme inline {
@@ -37,15 +52,15 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --color-pillar-blue: var(--pillar-blue);
-  --color-pillar-purple: var(--pillar-purple);
-  --color-pillar-green: var(--pillar-green);
-  --color-pillar-amber: var(--pillar-amber);
-  --color-pillar-red: var(--pillar-red);
-  --color-pillar-cyan: var(--pillar-cyan);
-  --color-pillar-pink: var(--pillar-pink);
-  --color-pillar-indigo: var(--pillar-indigo);
-  --color-pillar-teal: var(--pillar-teal);
+  --color-plate-blue: var(--plate-blue);
+  --color-plate-purple: var(--plate-purple);
+  --color-plate-green: var(--plate-green);
+  --color-plate-amber: var(--plate-amber);
+  --color-plate-red: var(--plate-red);
+  --color-plate-cyan: var(--plate-cyan);
+  --color-plate-pink: var(--plate-pink);
+  --color-plate-indigo: var(--plate-indigo);
+  --color-plate-teal: var(--plate-teal);
   --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-jetbrains-mono);
 }
@@ -53,6 +68,7 @@
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Noise overlay for texture */
@@ -62,6 +78,15 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 50;
+}
+[data-theme="light"] .noise-overlay {
+  opacity: 0;
+}
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--border);
 }
 
 /* Custom scrollbar */

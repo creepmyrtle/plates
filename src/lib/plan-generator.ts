@@ -8,7 +8,7 @@
 import type {
   User,
   Task,
-  Pillar,
+  Plate,
   Review,
   DayType,
   GeneratedPlan,
@@ -18,7 +18,7 @@ import type {
 // --- Scoring weights ---
 const WEIGHT_URGENCY = 0.35;
 const WEIGHT_PRIORITY = 0.30;
-const WEIGHT_PILLAR_BALANCE = 0.20;
+const WEIGHT_PLATE_BALANCE = 0.20;
 const WEIGHT_STALENESS = 0.15;
 
 // --- Limits ---
@@ -45,7 +45,7 @@ const TIME_PREF_ORDER: Record<string, number> = {
 };
 
 export function generateDailyPlan(input: PlanGeneratorInput): GeneratedPlan {
-  const { user, date, tasks, pillars, recentReviews, recentCompletions } = input;
+  const { user, date, tasks, plates, recentReviews, recentCompletions } = input;
 
   // 1. DETERMINE DAY TYPE
   const dayOfWeek = date.getDay(); // 0=Sun, 6=Sat
@@ -71,13 +71,13 @@ export function generateDailyPlan(input: PlanGeneratorInput): GeneratedPlan {
     return true;
   });
 
-  // 4. Build pillar health map for balance scoring
-  const pillarHealthMap = buildPillarHealthMap(pillars, recentReviews, recentCompletions);
+  // 4. Build plate health map for balance scoring
+  const plateHealthMap = buildPlateHealthMap(plates, recentReviews, recentCompletions);
 
   // 5. SCORE EACH TASK
   const scored = candidates.map((task) => ({
     task,
-    score: scoreTask(task, date, pillarHealthMap),
+    score: scoreTask(task, date, plateHealthMap),
   }));
 
   // Sort by score descending
@@ -90,7 +90,7 @@ export function generateDailyPlan(input: PlanGeneratorInput): GeneratedPlan {
   // First pass: fill by score until time budget used
   const selected: typeof scored = [];
   let totalMinutes = 0;
-  const selectedPillars = new Set<string>();
+  const selectedPlates = new Set<string>();
 
   for (const item of scored) {
     if (selected.length >= maxTasks) break;
@@ -100,21 +100,21 @@ export function generateDailyPlan(input: PlanGeneratorInput): GeneratedPlan {
 
     selected.push(item);
     totalMinutes += effort;
-    selectedPillars.add(item.task.pillar_id);
+    selectedPlates.add(item.task.plate_id);
   }
 
-  // Second pass: ensure at least one task per active pillar if possible
-  const activePillars = pillars.filter((p) => p.status === 'active');
-  for (const pillar of activePillars) {
-    if (selectedPillars.has(pillar.id)) continue;
+  // Second pass: ensure at least one task per active plate if possible
+  const activePlates = plates.filter((p) => p.status === 'active');
+  for (const plate of activePlates) {
+    if (selectedPlates.has(plate.id)) continue;
     if (selected.length >= maxTasks) break;
 
-    const pillarTask = scored.find(
-      (s) => s.task.pillar_id === pillar.id && !selected.includes(s)
+    const plateTask = scored.find(
+      (s) => s.task.plate_id === plate.id && !selected.includes(s)
     );
-    if (pillarTask) {
-      selected.push(pillarTask);
-      selectedPillars.add(pillar.id);
+    if (plateTask) {
+      selected.push(plateTask);
+      selectedPlates.add(plate.id);
     }
   }
 
@@ -155,17 +155,17 @@ export function generateDailyPlan(input: PlanGeneratorInput): GeneratedPlan {
 function scoreTask(
   task: Task,
   date: Date,
-  pillarHealthMap: Map<string, number>
+  plateHealthMap: Map<string, number>
 ): number {
   const urgency = urgencyScore(task, date);
   const priority = priorityScore(task);
-  const balance = pillarBalanceScore(task, pillarHealthMap);
+  const balance = plateBalanceScore(task, plateHealthMap);
   const staleness = stalenessScore(task, date);
 
   return (
     urgency * WEIGHT_URGENCY +
     priority * WEIGHT_PRIORITY +
-    balance * WEIGHT_PILLAR_BALANCE +
+    balance * WEIGHT_PLATE_BALANCE +
     staleness * WEIGHT_STALENESS
   );
 }
@@ -196,10 +196,10 @@ function priorityScore(task: Task): number {
   }
 }
 
-function pillarBalanceScore(task: Task, healthMap: Map<string, number>): number {
-  const health = healthMap.get(task.pillar_id);
+function plateBalanceScore(task: Task, healthMap: Map<string, number>): number {
+  const health = healthMap.get(task.plate_id);
   if (health === undefined) return 50;
-  // Inverse: neglected pillars (low health) get higher score
+  // Inverse: neglected plates (low health) get higher score
   return 100 - health;
 }
 
@@ -237,34 +237,34 @@ function timeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-function buildPillarHealthMap(
-  pillars: Pillar[],
+function buildPlateHealthMap(
+  plates: Plate[],
   recentReviews: Review[],
-  recentCompletions: { pillarId: string; completedAt: Date }[]
+  recentCompletions: { plateId: string; completedAt: Date }[]
 ): Map<string, number> {
   const map = new Map<string, number>();
 
-  for (const pillar of pillars) {
+  for (const plate of plates) {
     // Simple health estimate based on recent completions
     const now = new Date();
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const pillarCompletions = recentCompletions.filter(
-      (c) => c.pillarId === pillar.id && c.completedAt >= sevenDaysAgo
+    const plateCompletions = recentCompletions.filter(
+      (c) => c.plateId === plate.id && c.completedAt >= sevenDaysAgo
     );
 
     // Quick heuristic: more completions = healthier
-    let health = 20 + Math.min(pillarCompletions.length * 15, 60);
+    let health = 20 + Math.min(plateCompletions.length * 15, 60);
 
     // Boost from recent reviews
-    // Reviews don't have per-pillar ratings in the input here,
+    // Reviews don't have per-plate ratings in the input here,
     // so we use completion data as the primary signal
     if (recentReviews.length > 0) {
       health = Math.min(health + 10, 100);
     }
 
-    map.set(pillar.id, Math.min(health, 100));
+    map.set(plate.id, Math.min(health, 100));
   }
 
   return map;

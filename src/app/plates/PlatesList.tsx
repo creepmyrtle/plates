@@ -1,25 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import PillarCard from '@/components/PillarCard';
-import type { PillarWithCounts } from '@/lib/types';
+import PlateCard from '@/components/PlateCard';
+import type { PlateWithCounts } from '@/lib/types';
 import { useToast } from '@/components/Toast';
 
-const PILLAR_COLORS = [
+const PLATE_COLORS = [
   '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444',
   '#06B6D4', '#EC4899', '#6366F1', '#14B8A6',
 ];
 
-interface PillarsListProps {
-  initialPillars: PillarWithCounts[];
+interface PlatesListProps {
+  initialPlates: PlateWithCounts[];
 }
 
-export default function PillarsList({ initialPillars }: PillarsListProps) {
+export default function PlatesList({ initialPlates }: PlatesListProps) {
   const { showToast } = useToast();
-  const [pillars, setPillars] = useState(initialPillars);
+  const [plates, setPlates] = useState(initialPlates);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
-  const [color, setColor] = useState(PILLAR_COLORS[0]);
+  const [color, setColor] = useState(PLATE_COLORS[0]);
   const [type, setType] = useState<'ongoing' | 'goal'>('ongoing');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +29,7 @@ export default function PillarsList({ initialPillars }: PillarsListProps) {
     setSubmitting(true);
 
     try {
-      const res = await fetch('/api/pillars', {
+      const res = await fetch('/api/plates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), color, type, description: description.trim() || undefined }),
@@ -37,16 +37,16 @@ export default function PillarsList({ initialPillars }: PillarsListProps) {
 
       if (res.ok) {
         const { data } = await res.json();
-        setPillars((prev) => [...prev, { ...data, task_count: 0, pending_count: 0, completed_count: 0, health_score: null }]);
+        setPlates((prev) => [...prev, { ...data, task_count: 0, pending_count: 0, completed_count: 0, health_score: null }]);
         setName('');
         setDescription('');
         setShowForm(false);
-        showToast('Pillar created', 'success');
+        showToast('Plate created', 'success');
       } else {
-        showToast('Failed to create pillar', 'error');
+        showToast('Failed to create plate', 'error');
       }
     } catch {
-      showToast('Failed to create pillar', 'error');
+      showToast('Failed to create plate', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -54,13 +54,13 @@ export default function PillarsList({ initialPillars }: PillarsListProps) {
 
   return (
     <div className="mt-4 space-y-3">
-      {pillars.map((pillar) => (
-        <PillarCard key={pillar.id} pillar={pillar} />
+      {plates.map((plate) => (
+        <PlateCard key={plate.id} plate={plate} />
       ))}
 
-      {pillars.length === 0 && !showForm && (
+      {plates.length === 0 && !showForm && (
         <div className="rounded-lg border border-dashed border-border p-8 text-center text-text-secondary">
-          <p className="text-sm">No pillars yet. Create your first life pillar to get started.</p>
+          <p className="text-sm">No plates yet. Create your first life plate to get started.</p>
         </div>
       )}
 
@@ -71,7 +71,7 @@ export default function PillarsList({ initialPillars }: PillarsListProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
-            placeholder="Pillar name (e.g., Work, Family, Health)"
+            placeholder="Plate name (e.g., Work, Family, Health)"
             className="w-full rounded-lg border border-border bg-bg-secondary px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:border-accent focus:outline-none"
             autoFocus
           />
@@ -87,7 +87,7 @@ export default function PillarsList({ initialPillars }: PillarsListProps) {
           {/* Color picker */}
           <div className="mt-3 flex items-center gap-2">
             <span className="text-xs text-text-secondary">Color:</span>
-            {PILLAR_COLORS.map((c) => (
+            {PLATE_COLORS.map((c) => (
               <button
                 key={c}
                 onClick={() => setColor(c)}
@@ -124,7 +124,7 @@ export default function PillarsList({ initialPillars }: PillarsListProps) {
               disabled={!name.trim() || submitting}
               className="flex-1 rounded-lg bg-accent py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-40"
             >
-              {submitting ? 'Creating...' : 'Create Pillar'}
+              {submitting ? 'Creating...' : 'Create Plate'}
             </button>
             <button
               onClick={() => setShowForm(false)}
@@ -142,7 +142,7 @@ export default function PillarsList({ initialPillars }: PillarsListProps) {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          Add Pillar
+          Add Plate
         </button>
       )}
     </div>

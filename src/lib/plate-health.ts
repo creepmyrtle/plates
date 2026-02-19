@@ -1,36 +1,36 @@
 /**
- * Pillar Health Score Calculator
+ * Plate Health Score Calculator
  *
  * Returns 0-100 (100 = well-managed, 0 = neglected).
- * Plan generator uses INVERSE (neglected pillars get priority boost).
+ * Plan generator uses INVERSE (neglected plates get priority boost).
  */
 
 interface ReviewRating {
-  pillarId: string;
+  plateId: string;
   rating: number; // 1-5
   date: string;
 }
 
 interface Completion {
-  pillarId: string;
+  plateId: string;
   completedAt: Date;
 }
 
-export function calculatePillarHealth(
-  pillarId: string,
+export function calculatePlateHealth(
+  plateId: string,
   recentReviews: ReviewRating[],
   recentCompletions: Completion[]
 ): number {
   const now = new Date();
 
   // 1. Recent review rating (40%) — avg of last 7 review ratings, scaled to 0-100
-  const pillarRatings = recentReviews
-    .filter((r) => r.pillarId === pillarId)
+  const plateRatings = recentReviews
+    .filter((r) => r.plateId === plateId)
     .slice(0, 7);
 
   let reviewScore = 50; // default if no reviews
-  if (pillarRatings.length > 0) {
-    const avg = pillarRatings.reduce((sum, r) => sum + r.rating, 0) / pillarRatings.length;
+  if (plateRatings.length > 0) {
+    const avg = plateRatings.reduce((sum, r) => sum + r.rating, 0) / plateRatings.length;
     reviewScore = (avg / 5) * 100;
   }
 
@@ -38,17 +38,17 @@ export function calculatePillarHealth(
   const sevenDaysAgo = new Date(now);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const pillarCompletions = recentCompletions.filter(
-    (c) => c.pillarId === pillarId && c.completedAt >= sevenDaysAgo
+  const plateCompletions = recentCompletions.filter(
+    (c) => c.plateId === plateId && c.completedAt >= sevenDaysAgo
   );
 
   // Scale: 0 completions = 20, 1 = 40, 2 = 60, 3+ = 80-100
-  const completionScore = Math.min(20 + pillarCompletions.length * 20, 100);
+  const completionScore = Math.min(20 + plateCompletions.length * 20, 100);
 
   // 3. Recency (25%) — inverse of days since last completion
   let recencyScore = 20; // default if no completions ever
-  if (pillarCompletions.length > 0) {
-    const latest = pillarCompletions.reduce((max, c) =>
+  if (plateCompletions.length > 0) {
+    const latest = plateCompletions.reduce((max, c) =>
       c.completedAt > max.completedAt ? c : max
     );
     const daysSince = Math.floor(

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTheme } from '@/components/ThemeProvider';
 
-interface PillarHealth {
+interface PlateHealth {
   id: string;
   name: string;
   color: string;
@@ -15,8 +16,8 @@ interface UpcomingDeadline {
   title: string;
   due_date: string;
   priority: string;
-  pillar_name: string;
-  pillar_color: string;
+  plate_name: string;
+  plate_color: string;
 }
 
 interface Stats {
@@ -27,7 +28,7 @@ interface Stats {
   todayPlan: { total: number; completed: number; skipped: number };
   overdueCount: number;
   upcomingDeadlines: UpcomingDeadline[];
-  pillarHealth: PillarHealth[];
+  plateHealth: PlateHealth[];
 }
 
 export default function DashboardView() {
@@ -64,10 +65,31 @@ export default function DashboardView() {
     );
   }
 
+  const { theme, toggle: toggleTheme } = useTheme();
+
   return (
     <div className="px-4 pt-6 pb-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="mt-1 text-sm text-text-secondary">Your progress at a glance.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="mt-1 text-sm text-text-secondary">Your progress at a glance.</p>
+        </div>
+        <button
+          onClick={toggleTheme}
+          className="rounded-lg border border-border p-2.5 text-text-secondary transition-colors hover:bg-bg-secondary hover:text-text-primary"
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+            </svg>
+          )}
+        </button>
+      </div>
 
       {/* Quick stats row */}
       <div className="mt-5 grid grid-cols-2 gap-3">
@@ -104,12 +126,12 @@ export default function DashboardView() {
         </div>
       )}
 
-      {/* Pillar Health */}
-      {stats.pillarHealth.length > 0 && (
+      {/* Plate Health */}
+      {stats.plateHealth.length > 0 && (
         <div className="mt-5 rounded-lg border border-border bg-bg-card p-4">
-          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Pillar Health</h2>
+          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Plate Health</h2>
           <div className="mt-3 space-y-3">
-            {stats.pillarHealth.map((p) => (
+            {stats.plateHealth.map((p) => (
               <div key={p.id}>
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
@@ -141,11 +163,11 @@ export default function DashboardView() {
               <div
                 key={d.id}
                 className="flex items-center justify-between rounded-md border border-border p-2.5"
-                style={{ borderLeftWidth: '3px', borderLeftColor: d.pillar_color }}
+                style={{ borderLeftWidth: '3px', borderLeftColor: d.plate_color }}
               >
                 <div>
                   <span className="text-sm font-medium">{d.title}</span>
-                  <span className="ml-2 text-xs text-text-secondary">{d.pillar_name}</span>
+                  <span className="ml-2 text-xs text-text-secondary">{d.plate_name}</span>
                 </div>
                 <span className="text-xs font-mono text-text-secondary">
                   {formatDeadline(d.due_date)}
@@ -159,14 +181,14 @@ export default function DashboardView() {
       {/* Overdue link */}
       {stats.overdueCount > 0 && (
         <Link
-          href="/pillars"
+          href="/plates"
           className="mt-5 flex items-center justify-between rounded-lg border border-danger/30 bg-danger/5 p-4 transition-colors hover:bg-danger/10"
         >
           <div>
             <span className="text-sm font-semibold text-danger">
               {stats.overdueCount} overdue task{stats.overdueCount !== 1 ? 's' : ''}
             </span>
-            <p className="text-xs text-text-secondary mt-0.5">Review in Pillars</p>
+            <p className="text-xs text-text-secondary mt-0.5">Review in Plates</p>
           </div>
           <svg className="w-5 h-5 text-danger" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />

@@ -2,25 +2,32 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import TaskCard from '@/components/TaskCard';
+import TaskEditSheet from '@/components/TaskEditSheet';
+import PlateEditSheet from '@/components/PlateEditSheet';
 import { useToast } from '@/components/Toast';
-import type { Pillar, Task, Milestone } from '@/lib/types';
+import type { Plate, Task, Milestone } from '@/lib/types';
 
 type Filter = 'all' | 'pending' | 'completed' | 'recurring';
 
 interface Props {
-  pillar: Pillar;
+  plate: Plate;
   initialTasks: Task[];
   initialMilestones: Milestone[];
 }
 
-export default function PillarDetail({ pillar, initialTasks, initialMilestones }: Props) {
+export default function PlateDetail({ plate, initialTasks, initialMilestones }: Props) {
+  const router = useRouter();
   const { showToast } = useToast();
+  const [currentPlate, setCurrentPlate] = useState<Plate>(plate);
   const [tasks, setTasks] = useState(initialTasks);
   const [milestones, setMilestones] = useState(initialMilestones);
   const [filter, setFilter] = useState<Filter>('all');
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingPlate, setEditingPlate] = useState(false);
 
   // Task form state
   const [taskTitle, setTaskTitle] = useState('');
@@ -76,7 +83,7 @@ export default function PillarDetail({ pillar, initialTasks, initialMilestones }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pillar_id: pillar.id,
+          plate_id: currentPlate.id,
           title: taskTitle.trim(),
           priority: taskPriority,
           is_recurring: taskRecurring,
@@ -104,7 +111,7 @@ export default function PillarDetail({ pillar, initialTasks, initialMilestones }
     setSubmitting(true);
 
     try {
-      const res = await fetch(`/api/pillars/${pillar.id}/milestones`, {
+      const res = await fetch(`/api/plates/${currentPlate.id}/milestones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -145,6 +152,26 @@ export default function PillarDetail({ pillar, initialTasks, initialMilestones }
     }
   };
 
+  const handleTaskUpdated = useCallback((updated: Task) => {
+    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setEditingTask(null);
+  }, []);
+
+  const handleTaskDeleted = useCallback((taskId: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setEditingTask(null);
+  }, []);
+
+  const handlePlateUpdated = useCallback((updated: Plate) => {
+    setCurrentPlate(updated);
+    setEditingPlate(false);
+  }, []);
+
+  const handlePlateArchived = useCallback(() => {
+    setEditingPlate(false);
+    router.push('/plates');
+  }, [router]);
+
   const filters: { key: Filter; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'pending', label: 'Pending' },
@@ -156,35 +183,44 @@ export default function PillarDetail({ pillar, initialTasks, initialMilestones }
     <div className="px-4 pt-6">
       {/* Back link + header */}
       <Link
-        href="/pillars"
+        href="/plates"
         className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
         </svg>
-        Pillars
+        Plates
       </Link>
 
       <div className="mt-3 flex items-center gap-3">
-        <div className="h-10 w-1 rounded-full" style={{ backgroundColor: pillar.color }} />
-        <div>
+        <div className="h-10 w-1 rounded-full" style={{ backgroundColor: currentPlate.color }} />
+        <div className="flex-1">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            {pillar.icon && <span>{pillar.icon}</span>}
-            {pillar.name}
-            {pillar.type === 'goal' && (
+            {currentPlate.icon && <span>{currentPlate.icon}</span>}
+            {currentPlate.name}
+            {currentPlate.type === 'goal' && (
               <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
                 GOAL
               </span>
             )}
           </h1>
-          {pillar.description && (
-            <p className="text-sm text-text-secondary">{pillar.description}</p>
+          {currentPlate.description && (
+            <p className="text-sm text-text-secondary">{currentPlate.description}</p>
           )}
         </div>
+        <button
+          onClick={() => setEditingPlate(true)}
+          className="flex-shrink-0 rounded-lg p-2 text-text-secondary hover:text-text-primary hover:bg-bg-card transition-colors"
+          title="Edit plate"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+          </svg>
+        </button>
       </div>
 
-      {/* Milestones (for goal-type pillars) */}
-      {pillar.type === 'goal' && (
+      {/* Milestones (for goal-type plates) */}
+      {currentPlate.type === 'goal' && (
         <div className="mt-6">
           <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Milestones</h2>
           <div className="mt-2 space-y-2">
@@ -296,10 +332,11 @@ export default function PillarDetail({ pillar, initialTasks, initialMilestones }
             <TaskCard
               key={task.id}
               task={task}
-              pillarColor={pillar.color}
-              pillarName={pillar.name}
+              plateColor={currentPlate.color}
+              plateName={currentPlate.name}
               onComplete={handleCompleteTask}
               onSkip={handleSkipTask}
+              onTap={setEditingTask}
             />
           ))}
 
@@ -374,6 +411,25 @@ export default function PillarDetail({ pillar, initialTasks, initialMilestones }
           </button>
         )}
       </div>
+
+      {/* Edit sheets */}
+      {editingTask && (
+        <TaskEditSheet
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onUpdated={handleTaskUpdated}
+          onDeleted={handleTaskDeleted}
+        />
+      )}
+
+      {editingPlate && (
+        <PlateEditSheet
+          plate={currentPlate}
+          onClose={() => setEditingPlate(false)}
+          onUpdated={handlePlateUpdated}
+          onArchived={handlePlateArchived}
+        />
+      )}
     </div>
   );
 }

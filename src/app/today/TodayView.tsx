@@ -3,7 +3,8 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/components/Toast';
 import TaskCard from '@/components/TaskCard';
-import type { DailyPlan, PlanItemWithTask } from '@/lib/types';
+import TaskEditSheet from '@/components/TaskEditSheet';
+import type { Task, DailyPlan, PlanItemWithTask } from '@/lib/types';
 
 interface Props {
   initialPlan: DailyPlan | null;
@@ -23,6 +24,7 @@ export default function TodayView({ initialPlan, initialItems, date }: Props) {
   const [plan, setPlan] = useState(initialPlan);
   const [items, setItems] = useState(initialItems);
   const [generating, setGenerating] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const completedCount = items.filter((i) => i.completed || i.skipped).length;
   const totalCount = items.length;
@@ -105,6 +107,18 @@ export default function TodayView({ initialPlan, initialItems, date }: Props) {
       showToast('Failed to skip task', 'error');
     }
   }, [items, plan, showToast]);
+
+  const handleTaskUpdated = useCallback((updated: Task) => {
+    setItems((prev) =>
+      prev.map((i) => (i.task_id === updated.id ? { ...i, task: updated } : i))
+    );
+    setEditingTask(null);
+  }, []);
+
+  const handleTaskDeleted = useCallback((taskId: string) => {
+    setItems((prev) => prev.filter((i) => i.task_id !== taskId));
+    setEditingTask(null);
+  }, []);
 
   const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long',
@@ -205,9 +219,20 @@ export default function TodayView({ initialPlan, initialItems, date }: Props) {
             items={group.items}
             onComplete={handleComplete}
             onSkip={handleSkip}
+            onTap={setEditingTask}
           />
         ))}
       </div>
+
+      {/* Edit sheet */}
+      {editingTask && (
+        <TaskEditSheet
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onUpdated={handleTaskUpdated}
+          onDeleted={handleTaskDeleted}
+        />
+      )}
     </div>
   );
 }
@@ -221,11 +246,13 @@ function ContextGroup({
   items,
   onComplete,
   onSkip,
+  onTap,
 }: {
   label: string;
   items: PlanItemWithTask[];
   onComplete: (taskId: string) => void;
   onSkip: (taskId: string) => void;
+  onTap: (task: Task) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const doneCount = items.filter((i) => i.completed || i.skipped).length;
@@ -254,21 +281,25 @@ function ContextGroup({
 
       {!collapsed && (
         <div className="mt-1.5 space-y-2">
-          {items.map((item) => (
-            <TaskCard
-              key={item.id}
-              task={{
-                ...item.task,
-                // Override status if plan item is completed/skipped
-                status: item.completed ? 'completed' : item.skipped ? 'completed' : item.task.status,
-              }}
-              pillarColor={item.pillar_color}
-              pillarName={item.pillar_name}
-              onComplete={!item.completed && !item.skipped ? onComplete : undefined}
-              onSkip={!item.completed && !item.skipped ? onSkip : undefined}
-              swipeEnabled={!item.completed && !item.skipped}
-            />
-          ))}
+          {items.map((item) => {
+            const isActive = !item.completed && !item.skipped;
+            return (
+              <TaskCard
+                key={item.id}
+                task={{
+                  ...item.task,
+                  // Override status if plan item is completed/skipped
+                  status: item.completed ? 'completed' : item.skipped ? 'completed' : item.task.status,
+                }}
+                plateColor={item.plate_color}
+                plateName={item.plate_name}
+                onComplete={isActive ? onComplete : undefined}
+                onSkip={isActive ? onSkip : undefined}
+                onTap={isActive ? onTap : undefined}
+                swipeEnabled={isActive}
+              />
+            );
+          })}
         </div>
       )}
     </div>

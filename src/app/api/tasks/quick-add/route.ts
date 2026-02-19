@@ -5,15 +5,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (!body.title || !body.pillar_id) {
+    if (!body.title || !body.plate_id) {
       return NextResponse.json(
-        { error: { code: 'VALIDATION', message: 'title and pillar_id are required' } },
+        { error: { code: 'VALIDATION', message: 'title and plate_id are required' } },
         { status: 400 }
       );
     }
 
     const task = await createTask({
-      pillar_id: body.pillar_id,
+      plate_id: body.plate_id,
       title: body.title,
       priority: body.priority || 'medium',
       due_date: body.due_date,

@@ -4,18 +4,18 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/Toast';
 import {
-  SUGGESTED_PILLARS,
+  SUGGESTED_PLATES,
   SUGGESTED_TASKS,
   TIMEZONES,
   DAY_LABELS,
-  type SuggestedPillar,
+  type SuggestedPlate,
   type SuggestedTask,
 } from '@/lib/onboarding-data';
 import type { RecurrenceRule } from '@/lib/types';
 
 // --- Types ---
 
-interface SelectedPillar extends SuggestedPillar {
+interface SelectedPlate extends SuggestedPlate {
   id?: string; // set after creation
   selectedTasks: SelectedTask[];
 }
@@ -45,8 +45,8 @@ export default function OnboardingWizard() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  // Step 2: Pillars
-  const [selectedPillars, setSelectedPillars] = useState<SelectedPillar[]>([]);
+  // Step 2: Plates
+  const [selectedPlates, setSelectedPlates] = useState<SelectedPlate[]>([]);
 
   // Step 4: Schedule
   const [schedule, setSchedule] = useState<Schedule>({
@@ -62,20 +62,20 @@ export default function OnboardingWizard() {
   const totalSteps = 5;
   const progress = ((step + 1) / totalSteps) * 100;
 
-  // --- Pillar selection ---
+  // --- Plate selection ---
 
-  const togglePillar = useCallback((pillar: SuggestedPillar) => {
-    setSelectedPillars((prev) => {
-      const existing = prev.find((p) => p.name === pillar.name);
+  const togglePlate = useCallback((plate: SuggestedPlate) => {
+    setSelectedPlates((prev) => {
+      const existing = prev.find((p) => p.name === plate.name);
       if (existing) {
-        return prev.filter((p) => p.name !== pillar.name);
+        return prev.filter((p) => p.name !== plate.name);
       }
       // Add with suggested tasks pre-selected
-      const suggestions = SUGGESTED_TASKS[pillar.name] || [];
+      const suggestions = SUGGESTED_TASKS[plate.name] || [];
       return [
         ...prev,
         {
-          ...pillar,
+          ...plate,
           selectedTasks: suggestions.map((t) => ({ ...t, selected: true })),
         },
       ];
@@ -84,10 +84,10 @@ export default function OnboardingWizard() {
 
   // --- Task selection ---
 
-  const toggleTask = useCallback((pillarName: string, taskTitle: string) => {
-    setSelectedPillars((prev) =>
+  const toggleTask = useCallback((plateName: string, taskTitle: string) => {
+    setSelectedPlates((prev) =>
       prev.map((p) => {
-        if (p.name !== pillarName) return p;
+        if (p.name !== plateName) return p;
         return {
           ...p,
           selectedTasks: p.selectedTasks.map((t) =>
@@ -98,10 +98,10 @@ export default function OnboardingWizard() {
     );
   }, []);
 
-  const addCustomTask = useCallback((pillarName: string, title: string) => {
-    setSelectedPillars((prev) =>
+  const addCustomTask = useCallback((plateName: string, title: string) => {
+    setSelectedPlates((prev) =>
       prev.map((p) => {
-        if (p.name !== pillarName) return p;
+        if (p.name !== plateName) return p;
         return {
           ...p,
           selectedTasks: [
@@ -136,25 +136,25 @@ export default function OnboardingWizard() {
         body: JSON.stringify(schedule),
       });
 
-      // 2. Create pillars and tasks
-      for (const pillar of selectedPillars) {
-        const pillarRes = await fetch('/api/pillars', {
+      // 2. Create plates and tasks
+      for (const plate of selectedPlates) {
+        const plateRes = await fetch('/api/plates', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: pillar.name,
-            color: pillar.color,
-            type: pillar.type,
-            description: pillar.description,
-            icon: pillar.icon,
+            name: plate.name,
+            color: plate.color,
+            type: plate.type,
+            description: plate.description,
+            icon: plate.icon,
           }),
         });
 
-        if (!pillarRes.ok) continue;
-        const { data: createdPillar } = await pillarRes.json();
+        if (!plateRes.ok) continue;
+        const { data: createdPlate } = await plateRes.json();
 
         // Create selected tasks
-        const tasksToCreate = pillar.selectedTasks.filter((t) => t.selected);
+        const tasksToCreate = plate.selectedTasks.filter((t) => t.selected);
         for (const task of tasksToCreate) {
           const isRecurring = task.recurrence !== 'one-time';
           let recurrenceRule: RecurrenceRule | undefined;
@@ -169,7 +169,7 @@ export default function OnboardingWizard() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              pillar_id: createdPillar.id,
+              plate_id: createdPlate.id,
               title: task.title,
               is_recurring: isRecurring,
               recurrence_rule: recurrenceRule,
@@ -203,16 +203,16 @@ export default function OnboardingWizard() {
       <div className="mx-auto w-full max-w-lg flex-1 px-4 pt-12 pb-8">
         {step === 0 && <StepWelcome onNext={() => setStep(1)} />}
         {step === 1 && (
-          <StepPillars
-            selected={selectedPillars}
-            onToggle={togglePillar}
+          <StepPlates
+            selected={selectedPlates}
+            onToggle={togglePlate}
             onBack={() => setStep(0)}
             onNext={() => setStep(2)}
           />
         )}
         {step === 2 && (
           <StepTasks
-            pillars={selectedPillars}
+            plates={selectedPlates}
             onToggleTask={toggleTask}
             onAddCustomTask={addCustomTask}
             onBack={() => setStep(1)}
@@ -230,7 +230,7 @@ export default function OnboardingWizard() {
         )}
         {step === 4 && (
           <StepReady
-            pillars={selectedPillars}
+            plates={selectedPlates}
             schedule={schedule}
             submitting={submitting}
             onBack={() => setStep(3)}
@@ -270,14 +270,14 @@ function StepWelcome({ onNext }: { onNext: () => void }) {
   );
 }
 
-function StepPillars({
+function StepPlates({
   selected,
   onToggle,
   onBack,
   onNext,
 }: {
-  selected: SelectedPillar[];
-  onToggle: (p: SuggestedPillar) => void;
+  selected: SelectedPlate[];
+  onToggle: (p: SuggestedPlate) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -285,34 +285,34 @@ function StepPillars({
     <div className="animate-fade-up">
       <StepHeader
         step={2}
-        title="Your Life Pillars"
+        title="Your Life Plates"
         subtitle="Select the areas of your life you want to manage. You can always add more later."
       />
 
       <div className="mt-6 grid grid-cols-1 gap-2">
-        {SUGGESTED_PILLARS.map((pillar) => {
-          const isSelected = selected.some((p) => p.name === pillar.name);
+        {SUGGESTED_PLATES.map((plate) => {
+          const isSelected = selected.some((p) => p.name === plate.name);
           return (
             <button
-              key={pillar.name}
-              onClick={() => onToggle(pillar)}
+              key={plate.name}
+              onClick={() => onToggle(plate)}
               className={`flex items-center gap-3 rounded-lg border p-3.5 text-left transition-all ${
                 isSelected
                   ? 'border-accent bg-accent/10'
                   : 'border-border bg-bg-card hover:border-border-hover'
               }`}
             >
-              <span className="text-xl">{pillar.icon}</span>
+              <span className="text-xl">{plate.icon}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{pillar.name}</span>
-                  {pillar.type === 'goal' && (
+                  <span className="font-medium text-sm">{plate.name}</span>
+                  {plate.type === 'goal' && (
                     <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent">
                       GOAL
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-text-secondary mt-0.5">{pillar.description}</p>
+                <p className="text-xs text-text-secondary mt-0.5">{plate.description}</p>
               </div>
               <div
                 className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
@@ -334,58 +334,58 @@ function StepPillars({
         onBack={onBack}
         onNext={onNext}
         nextDisabled={selected.length === 0}
-        nextLabel={`Continue with ${selected.length} pillar${selected.length !== 1 ? 's' : ''}`}
+        nextLabel={`Continue with ${selected.length} plate${selected.length !== 1 ? 's' : ''}`}
       />
     </div>
   );
 }
 
 function StepTasks({
-  pillars,
+  plates,
   onToggleTask,
   onAddCustomTask,
   onBack,
   onNext,
 }: {
-  pillars: SelectedPillar[];
-  onToggleTask: (pillarName: string, taskTitle: string) => void;
-  onAddCustomTask: (pillarName: string, title: string) => void;
+  plates: SelectedPlate[];
+  onToggleTask: (plateName: string, taskTitle: string) => void;
+  onAddCustomTask: (plateName: string, title: string) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
   const [customInputs, setCustomInputs] = useState<Record<string, string>>({});
-  const [expandedPillar, setExpandedPillar] = useState<string>(pillars[0]?.name || '');
+  const [expandedPlate, setExpandedPlate] = useState<string>(plates[0]?.name || '');
 
-  const handleAddCustom = (pillarName: string) => {
-    const title = customInputs[pillarName]?.trim();
+  const handleAddCustom = (plateName: string) => {
+    const title = customInputs[plateName]?.trim();
     if (!title) return;
-    onAddCustomTask(pillarName, title);
-    setCustomInputs((prev) => ({ ...prev, [pillarName]: '' }));
+    onAddCustomTask(plateName, title);
+    setCustomInputs((prev) => ({ ...prev, [plateName]: '' }));
   };
 
-  const totalTasks = pillars.reduce((acc, p) => acc + p.selectedTasks.filter((t) => t.selected).length, 0);
+  const totalTasks = plates.reduce((acc, p) => acc + p.selectedTasks.filter((t) => t.selected).length, 0);
 
   return (
     <div className="animate-fade-up">
       <StepHeader
         step={3}
         title="Add Some Tasks"
-        subtitle="We've suggested common tasks for each pillar. Toggle them on or off, or add your own."
+        subtitle="We've suggested common tasks for each plate. Toggle them on or off, or add your own."
       />
 
       <div className="mt-6 space-y-3">
-        {pillars.map((pillar) => {
-          const isExpanded = expandedPillar === pillar.name;
-          const selectedCount = pillar.selectedTasks.filter((t) => t.selected).length;
+        {plates.map((plate) => {
+          const isExpanded = expandedPlate === plate.name;
+          const selectedCount = plate.selectedTasks.filter((t) => t.selected).length;
 
           return (
-            <div key={pillar.name} className="rounded-lg border border-border bg-bg-card overflow-hidden">
+            <div key={plate.name} className="rounded-lg border border-border bg-bg-card overflow-hidden">
               <button
-                onClick={() => setExpandedPillar(isExpanded ? '' : pillar.name)}
+                onClick={() => setExpandedPlate(isExpanded ? '' : plate.name)}
                 className="flex w-full items-center gap-3 p-3.5 text-left"
               >
-                <span>{pillar.icon}</span>
-                <span className="flex-1 font-medium text-sm">{pillar.name}</span>
+                <span>{plate.icon}</span>
+                <span className="flex-1 font-medium text-sm">{plate.name}</span>
                 <span className="text-xs text-text-secondary font-mono">{selectedCount} tasks</span>
                 <svg
                   className={`w-4 h-4 text-text-secondary transition-transform ${isExpanded ? 'rotate-180' : ''}`}
@@ -398,11 +398,11 @@ function StepTasks({
               {isExpanded && (
                 <div className="border-t border-border px-3.5 pb-3.5">
                   <div className="mt-2 space-y-1">
-                    {pillar.selectedTasks.map((task) => (
+                    {plate.selectedTasks.map((task) => (
                       <TaskToggle
                         key={task.title}
                         task={task}
-                        onToggle={() => onToggleTask(pillar.name, task.title)}
+                        onToggle={() => onToggleTask(plate.name, task.title)}
                       />
                     ))}
                   </div>
@@ -411,17 +411,17 @@ function StepTasks({
                   <div className="mt-2 flex gap-2">
                     <input
                       type="text"
-                      value={customInputs[pillar.name] || ''}
+                      value={customInputs[plate.name] || ''}
                       onChange={(e) =>
-                        setCustomInputs((prev) => ({ ...prev, [pillar.name]: e.target.value }))
+                        setCustomInputs((prev) => ({ ...prev, [plate.name]: e.target.value }))
                       }
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddCustom(pillar.name); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleAddCustom(plate.name); }}
                       placeholder="Add custom task..."
                       className="flex-1 rounded border border-border bg-bg-secondary px-3 py-1.5 text-xs text-text-primary placeholder:text-text-secondary focus:border-accent focus:outline-none"
                     />
                     <button
-                      onClick={() => handleAddCustom(pillar.name)}
-                      disabled={!customInputs[pillar.name]?.trim()}
+                      onClick={() => handleAddCustom(plate.name)}
+                      disabled={!customInputs[plate.name]?.trim()}
                       className="rounded bg-accent/15 px-3 py-1.5 text-xs font-medium text-accent disabled:opacity-30"
                     >
                       Add
@@ -561,19 +561,19 @@ function StepSchedule({
 }
 
 function StepReady({
-  pillars,
+  plates,
   schedule,
   submitting,
   onBack,
   onFinish,
 }: {
-  pillars: SelectedPillar[];
+  plates: SelectedPlate[];
   schedule: Schedule;
   submitting: boolean;
   onBack: () => void;
   onFinish: () => void;
 }) {
-  const totalTasks = pillars.reduce((acc, p) => acc + p.selectedTasks.filter((t) => t.selected).length, 0);
+  const totalTasks = plates.reduce((acc, p) => acc + p.selectedTasks.filter((t) => t.selected).length, 0);
 
   return (
     <div className="animate-fade-up">
@@ -584,11 +584,11 @@ function StepReady({
       />
 
       <div className="mt-6 space-y-4">
-        {/* Pillars summary */}
+        {/* Plates summary */}
         <div className="rounded-lg border border-border bg-bg-card p-4">
-          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Pillars</h3>
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Plates</h3>
           <div className="mt-2 flex flex-wrap gap-2">
-            {pillars.map((p) => (
+            {plates.map((p) => (
               <span
                 key={p.name}
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-white"
@@ -605,7 +605,7 @@ function StepReady({
           <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Tasks</h3>
           <p className="mt-1 text-sm font-mono">
             <span className="text-text-primary font-semibold">{totalTasks}</span> tasks across{' '}
-            <span className="text-text-primary font-semibold">{pillars.length}</span> pillars
+            <span className="text-text-primary font-semibold">{plates.length}</span> plates
           </p>
         </div>
 

@@ -6,8 +6,8 @@ import type { Task } from '@/lib/types';
 
 interface TaskCardProps {
   task: Task;
-  pillarColor: string;
-  pillarName: string;
+  plateColor: string;
+  plateName: string;
   onComplete?: (taskId: string) => void;
   onSkip?: (taskId: string) => void;
   onTap?: (task: Task) => void;
@@ -21,8 +21,8 @@ const priorityBadge: Record<string, { label: string; className: string }> = {
 
 export default function TaskCard({
   task,
-  pillarColor,
-  pillarName,
+  plateColor,
+  plateName,
   onComplete,
   onSkip,
   onTap,
@@ -78,7 +78,7 @@ export default function TaskCard({
         className={`relative flex items-start gap-3 rounded-lg border border-border bg-bg-card p-4 ${
           isCompleted ? 'opacity-50' : 'cursor-pointer active:bg-bg-secondary'
         }`}
-        style={{ borderLeftWidth: '3px', borderLeftColor: pillarColor }}
+        style={{ borderLeftWidth: '3px', borderLeftColor: plateColor }}
       >
         {/* Completion checkbox */}
         <button
@@ -112,7 +112,7 @@ export default function TaskCard({
           </div>
 
           <div className="mt-1 flex items-center gap-3 text-xs text-text-secondary">
-            <span>{pillarName}</span>
+            <span>{plateName}</span>
             {task.effort_minutes && (
               <span className="font-mono">{task.effort_minutes}m</span>
             )}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
-import { reorderPillars } from '@/lib/db/pillars';
+import { reorderPlates } from '@/lib/db/plates';
 
 export async function PATCH(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    await reorderPillars(userId, ids);
+    await reorderPlates(userId, ids);
     return NextResponse.json({ data: { success: true } });
   } catch {
     return NextResponse.json(

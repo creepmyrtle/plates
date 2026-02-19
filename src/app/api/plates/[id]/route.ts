@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPillarById, updatePillar, archivePillar } from '@/lib/db/pillars';
+import { getPlateById, updatePlate, archivePlate } from '@/lib/db/plates';
 
 export async function PATCH(
   request: Request,
@@ -9,7 +9,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const pillar = await updatePillar(id, {
+    const plate = await updatePlate(id, {
       name: body.name,
       color: body.color,
       type: body.type,
@@ -18,14 +18,14 @@ export async function PATCH(
       status: body.status,
     });
 
-    if (!pillar) {
+    if (!plate) {
       return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Pillar not found' } },
+        { error: { code: 'NOT_FOUND', message: 'Plate not found' } },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ data: pillar });
+    return NextResponse.json({ data: plate });
   } catch {
     return NextResponse.json(
       { error: { code: 'INTERNAL', message: 'Internal server error' } },
@@ -41,16 +41,16 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const existing = await getPillarById(id);
+    const existing = await getPlateById(id);
     if (!existing) {
       return NextResponse.json(
-        { error: { code: 'NOT_FOUND', message: 'Pillar not found' } },
+        { error: { code: 'NOT_FOUND', message: 'Plate not found' } },
         { status: 404 }
       );
     }
 
-    const pillar = await archivePillar(id);
-    return NextResponse.json({ data: pillar });
+    const plate = await archivePlate(id);
+    return NextResponse.json({ data: plate });
   } catch {
     return NextResponse.json(
       { error: { code: 'INTERNAL', message: 'Internal server error' } },

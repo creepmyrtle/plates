@@ -1,5 +1,5 @@
 import { getSessionUserId } from '@/lib/auth';
-import { getPillarsByUserId } from '@/lib/db/pillars';
+import { getPlatesByUserId } from '@/lib/db/plates';
 import { getPlanByUserAndDate, getPlanItemsWithTasks } from '@/lib/db/plans';
 import { getReviewWithRatings } from '@/lib/db/reviews';
 import ReviewFlow from '@/components/ReviewFlow';
@@ -15,17 +15,17 @@ export default async function ReviewPage() {
   const existingReview = await getReviewWithRatings(userId, today);
 
   if (existingReview) {
-    const pillarRows = await getPillarsByUserId(userId);
-    return <ReviewSummary review={existingReview.review} ratings={existingReview.ratings} pillars={pillarRows} />;
+    const plateRows = await getPlatesByUserId(userId);
+    return <ReviewSummary review={existingReview.review} ratings={existingReview.ratings} plates={plateRows} />;
   }
 
   // Get data for the review flow
-  const [pillarRows, plan] = await Promise.all([
-    getPillarsByUserId(userId),
+  const [plateRows, plan] = await Promise.all([
+    getPlatesByUserId(userId),
     getPlanByUserAndDate(userId, today),
   ]);
 
-  const pillars = pillarRows.map((p) => ({
+  const plates = plateRows.map((p) => ({
     id: p.id,
     user_id: p.user_id,
     name: p.name,
@@ -46,5 +46,5 @@ export default async function ReviewPage() {
     incompleteItems = allItems.filter((i) => !i.completed && !i.skipped);
   }
 
-  return <ReviewFlow pillars={pillars} incompleteItems={incompleteItems} />;
+  return <ReviewFlow plates={plates} incompleteItems={incompleteItems} />;
 }

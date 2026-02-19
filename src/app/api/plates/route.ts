@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getSessionUserId } from '@/lib/auth';
-import { getPillarsByUserId, createPillar } from '@/lib/db/pillars';
+import { getPlatesByUserId, createPlate } from '@/lib/db/plates';
 
 export async function GET() {
   try {
     const userId = await getSessionUserId();
-    const pillars = await getPillarsByUserId(userId);
-    return NextResponse.json({ data: pillars });
+    const plates = await getPlatesByUserId(userId);
+    return NextResponse.json({ data: plates });
   } catch {
     return NextResponse.json(
       { error: { code: 'INTERNAL', message: 'Internal server error' } },
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const pillar = await createPillar(userId, {
+    const plate = await createPlate(userId, {
       name: body.name,
       color: body.color,
       type: body.type,
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       icon: body.icon,
     });
 
-    return NextResponse.json({ data: pillar }, { status: 201 });
+    return NextResponse.json({ data: plate }, { status: 201 });
   } catch {
     return NextResponse.json(
       { error: { code: 'INTERNAL', message: 'Internal server error' } },

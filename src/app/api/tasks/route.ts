@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const tasks = await getTasksByUserId(userId, {
-      pillarId: searchParams.get('pillarId') || undefined,
+      plateId: searchParams.get('plateId') || undefined,
       status: searchParams.get('status') || undefined,
       priority: searchParams.get('priority') || undefined,
       context: searchParams.get('context') || undefined,
@@ -27,15 +27,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (!body.pillar_id || !body.title) {
+    if (!body.plate_id || !body.title) {
       return NextResponse.json(
-        { error: { code: 'VALIDATION', message: 'pillar_id and title are required' } },
+        { error: { code: 'VALIDATION', message: 'plate_id and title are required' } },
         { status: 400 }
       );
     }
 
     const task = await createTask({
-      pillar_id: body.pillar_id,
+      plate_id: body.plate_id,
       title: body.title,
       description: body.description,
       priority: body.priority,

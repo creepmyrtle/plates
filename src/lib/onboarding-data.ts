@@ -1,6 +1,6 @@
-// Suggested pillars and tasks for onboarding
+// Suggested plates and tasks for onboarding
 
-export interface SuggestedPillar {
+export interface SuggestedPlate {
   name: string;
   icon: string;
   color: string;
@@ -14,7 +14,7 @@ export interface SuggestedTask {
   days?: number[]; // for weekly
 }
 
-export const SUGGESTED_PILLARS: SuggestedPillar[] = [
+export const SUGGESTED_PLATES: SuggestedPlate[] = [
   { name: 'Work', icon: '💼', color: '#3B82F6', type: 'ongoing', description: 'Career and professional growth' },
   { name: 'Family & Home', icon: '🏠', color: '#10B981', type: 'ongoing', description: 'Family life and household management' },
   { name: 'Health & Fitness', icon: '💪', color: '#EF4444', type: 'ongoing', description: 'Physical and mental wellbeing' },

@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyCronSecret } from '@/lib/auth';
 import { getDefaultUser } from '@/lib/db/users';
-import { getTasksByUserId } from '@/lib/db/tasks';
-import { getPillarsByUserId } from '@/lib/db/pillars';
-import { getRecentReviews } from '@/lib/db/reviews';
-import { createPlan, getRecentCompletions } from '@/lib/db/plans';
-import { generateDailyPlan } from '@/lib/plan-generator';
+import { generateAndSavePlan } from '@/lib/db/plan-operations';
 
 export async function POST(request: Request) {
   if (!verifyCronSecret(request)) {
@@ -16,7 +12,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    // For v1, generate for the single default user
     const user = await getDefaultUser();
     if (!user) {
       return NextResponse.json(
@@ -29,35 +24,13 @@ export async function POST(request: Request) {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const dateStr = tomorrow.toISOString().split('T')[0];
 
-    const [tasks, pillars, recentReviews, recentCompletions] = await Promise.all([
-      getTasksByUserId(user.id),
-      getPillarsByUserId(user.id),
-      getRecentReviews(user.id),
-      getRecentCompletions(user.id),
-    ]);
-
-    const generated = generateDailyPlan({
-      user,
-      date: tomorrow,
-      tasks,
-      pillars,
-      recentReviews,
-      recentCompletions,
-    });
-
-    const plan = await createPlan({
-      userId: user.id,
-      date: dateStr,
-      dayType: generated.dayType,
-      availableMinutes: generated.availableMinutes,
-      items: generated.items,
-    });
+    const plan = await generateAndSavePlan(user, dateStr);
 
     return NextResponse.json({
       data: {
         date: dateStr,
-        planId: plan.id,
-        itemCount: generated.items.length,
+        planId: plan?.id ?? null,
+        itemCount: plan ? 1 : 0,
       },
     });
   } catch (e) {

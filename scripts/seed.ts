@@ -1,8 +1,8 @@
-import { seedDatabase } from '@/lib/db/seed';
+import { seedSampleData } from '@/lib/db/seed';
 
 async function main() {
-  console.log('Seeding database...');
-  await seedDatabase();
+  console.log('Seeding database with sample data...');
+  await seedSampleData();
   console.log('Done.');
   process.exit(0);
 }

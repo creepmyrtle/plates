@@ -3,45 +3,45 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { useToast } from '@/components/Toast';
-import type { Pillar } from '@/lib/types';
+import type { Plate } from '@/lib/types';
 
 export default function QuickAdd() {
   const pathname = usePathname();
   const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
-  const [selectedPillar, setSelectedPillar] = useState<string | null>(null);
+  const [selectedPlate, setSelectedPlate] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState('medium');
-  const [pillars, setPillars] = useState<Pillar[]>([]);
+  const [plates, setPlates] = useState<Plate[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Hide on onboarding
   if (pathname?.startsWith('/onboarding')) return null;
 
-  const fetchPillars = useCallback(async () => {
+  const fetchPlates = useCallback(async () => {
     try {
-      const res = await fetch('/api/pillars');
+      const res = await fetch('/api/plates');
       const json = await res.json();
       if (json.data) {
-        setPillars(json.data);
-        if (json.data.length > 0 && !selectedPillar) {
-          setSelectedPillar(json.data[0].id);
+        setPlates(json.data);
+        if (json.data.length > 0 && !selectedPlate) {
+          setSelectedPlate(json.data[0].id);
         }
       }
     } catch { /* ignore */ }
-  }, [selectedPillar]);
+  }, [selectedPlate]);
 
   useEffect(() => {
     if (open) {
-      fetchPillars();
+      fetchPlates();
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [open, fetchPillars]);
+  }, [open, fetchPlates]);
 
   const handleSubmit = async () => {
-    if (!title.trim() || !selectedPillar) return;
+    if (!title.trim() || !selectedPlate) return;
     setSubmitting(true);
 
     try {
@@ -50,7 +50,7 @@ export default function QuickAdd() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
-          pillar_id: selectedPillar,
+          plate_id: selectedPlate,
           due_date: dueDate || undefined,
           priority,
         }),
@@ -114,19 +114,19 @@ export default function QuickAdd() {
               className="w-full rounded-lg border border-border bg-bg-card px-4 py-3 text-text-primary placeholder:text-text-secondary focus:border-accent focus:outline-none"
             />
 
-            {/* Pillar chips */}
-            {pillars.length > 0 && (
+            {/* Plate chips */}
+            {plates.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">
-                {pillars.map((p) => (
+                {plates.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => setSelectedPillar(p.id)}
+                    onClick={() => setSelectedPlate(p.id)}
                     className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                      selectedPillar === p.id
+                      selectedPlate === p.id
                         ? 'border-transparent text-white'
                         : 'border-border text-text-secondary hover:border-border-hover'
                     }`}
-                    style={selectedPillar === p.id ? { backgroundColor: p.color } : undefined}
+                    style={selectedPlate === p.id ? { backgroundColor: p.color } : undefined}
                   >
                     {p.icon && <span className="mr-1">{p.icon}</span>}
                     {p.name}
@@ -158,7 +158,7 @@ export default function QuickAdd() {
             {/* Submit */}
             <button
               onClick={handleSubmit}
-              disabled={!title.trim() || !selectedPillar || submitting}
+              disabled={!title.trim() || !selectedPlate || submitting}
               className="mt-4 w-full rounded-lg bg-accent py-3 text-sm font-semibold text-white transition-opacity disabled:opacity-40"
             >
               {submitting ? 'Adding...' : 'Add Task'}

@@ -3,7 +3,7 @@ import type { Task, RecurrenceRule } from '@/lib/types';
 import { getDb } from './index';
 
 interface TaskFilters {
-  pillarId?: string;
+  plateId?: string;
   status?: string;
   priority?: string;
   context?: string;
@@ -14,15 +14,15 @@ export async function getTasksByUserId(userId: string, filters?: TaskFilters): P
 
   let query = `
     SELECT t.* FROM tasks t
-    JOIN pillars p ON t.pillar_id = p.id
+    JOIN plates p ON t.plate_id = p.id
     WHERE p.user_id = $1
   `;
   const values: unknown[] = [userId];
   let paramIndex = 2;
 
-  if (filters?.pillarId) {
-    query += ` AND t.pillar_id = $${paramIndex}`;
-    values.push(filters.pillarId);
+  if (filters?.plateId) {
+    query += ` AND t.plate_id = $${paramIndex}`;
+    values.push(filters.plateId);
     paramIndex++;
   }
   if (filters?.status) {
@@ -47,11 +47,11 @@ export async function getTasksByUserId(userId: string, filters?: TaskFilters): P
   return rows as Task[];
 }
 
-export async function getTasksByPillarId(pillarId: string): Promise<Task[]> {
+export async function getTasksByPlateId(plateId: string): Promise<Task[]> {
   await getDb();
   const { rows } = await sql`
     SELECT * FROM tasks
-    WHERE pillar_id = ${pillarId}
+    WHERE plate_id = ${plateId}
     ORDER BY
       CASE WHEN status = 'completed' THEN 1 ELSE 0 END ASC,
       sort_order ASC,
@@ -67,7 +67,7 @@ export async function getTaskById(id: string): Promise<Task | null> {
 }
 
 export async function createTask(data: {
-  pillar_id: string;
+  plate_id: string;
   title: string;
   description?: string;
   priority?: string;
@@ -81,10 +81,10 @@ export async function createTask(data: {
 }): Promise<Task> {
   await getDb();
 
-  // Get next sort order for this pillar
+  // Get next sort order for this plate
   const { rows: countRows } = await sql`
     SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order
-    FROM tasks WHERE pillar_id = ${data.pillar_id}
+    FROM tasks WHERE plate_id = ${data.plate_id}
   `;
   const sortOrder = countRows[0]?.next_order ?? 0;
 
@@ -98,12 +98,12 @@ export async function createTask(data: {
 
   const { rows } = await sql`
     INSERT INTO tasks (
-      pillar_id, title, description, priority, effort_minutes,
+      plate_id, title, description, priority, effort_minutes,
       energy_level, context, time_preference, due_date,
       is_recurring, recurrence_rule, next_occurrence, sort_order
     )
     VALUES (
-      ${data.pillar_id},
+      ${data.plate_id},
       ${data.title},
       ${data.description || null},
       ${data.priority || 'medium'},
