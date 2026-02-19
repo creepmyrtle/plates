@@ -1,8 +1,15 @@
-export default function TodayPage() {
-  return (
-    <div className="px-4 pt-6">
-      <h1 className="text-2xl font-bold">Today</h1>
-      <p className="mt-2 text-text-secondary">Your daily plan will appear here.</p>
-    </div>
-  );
+import { getSessionUserId } from '@/lib/auth';
+import { getPlanByUserAndDate, getPlanItemsWithTasks } from '@/lib/db/plans';
+import TodayView from './TodayView';
+
+export const dynamic = 'force-dynamic';
+
+export default async function TodayPage() {
+  const userId = await getSessionUserId();
+  const today = new Date().toISOString().split('T')[0];
+
+  const plan = await getPlanByUserAndDate(userId, today);
+  const items = plan ? await getPlanItemsWithTasks(plan.id) : [];
+
+  return <TodayView initialPlan={plan} initialItems={items} date={today} />;
 }
