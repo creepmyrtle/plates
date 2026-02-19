@@ -19,6 +19,8 @@ export async function PATCH(
       time_preference: body.time_preference,
       due_date: body.due_date,
       status: body.status,
+      is_recurring: body.is_recurring,
+      recurrence_rule: body.recurrence_rule,
     });
 
     if (!task) {

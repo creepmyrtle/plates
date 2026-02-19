@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
+import { useToast } from '@/components/Toast';
 
 interface PlateHealth {
   id: string;
@@ -66,6 +68,32 @@ export default function DashboardView() {
   }
 
   const { theme, toggle: toggleTheme } = useTheme();
+  const { showToast } = useToast();
+  const router = useRouter();
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const handleReset = async () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    setResetting(true);
+    try {
+      const res = await fetch('/api/user/reset', { method: 'POST' });
+      if (res.ok) {
+        showToast('Account reset', 'success');
+        router.push('/');
+      } else {
+        showToast('Failed to reset account', 'error');
+      }
+    } catch {
+      showToast('Failed to reset account', 'error');
+    } finally {
+      setResetting(false);
+      setConfirmReset(false);
+    }
+  };
 
   return (
     <div className="px-4 pt-6 pb-4">
@@ -195,6 +223,26 @@ export default function DashboardView() {
           </svg>
         </Link>
       )}
+
+      {/* Reset account */}
+      <div className="mt-8 rounded-lg border border-border bg-bg-card p-4">
+        <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Account</h2>
+        <p className="mt-2 text-xs text-text-secondary">
+          Reset your account to clear all plates, tasks, plans, and reviews, then restart onboarding.
+        </p>
+        <button
+          onClick={handleReset}
+          onBlur={() => setConfirmReset(false)}
+          disabled={resetting}
+          className={`mt-3 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-40 ${
+            confirmReset
+              ? 'border-danger bg-danger text-white'
+              : 'border-danger/30 text-danger hover:bg-danger/10'
+          }`}
+        >
+          {resetting ? 'Resetting...' : confirmReset ? 'Tap again to confirm' : 'Reset Account'}
+        </button>
+      </div>
     </div>
   );
 }

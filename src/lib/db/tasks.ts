@@ -124,7 +124,7 @@ export async function createTask(data: {
 
 export async function updateTask(
   id: string,
-  data: Partial<Pick<Task, 'title' | 'description' | 'priority' | 'effort_minutes' | 'energy_level' | 'context' | 'time_preference' | 'due_date' | 'status'>>
+  data: Partial<Pick<Task, 'title' | 'description' | 'priority' | 'effort_minutes' | 'energy_level' | 'context' | 'time_preference' | 'due_date' | 'status' | 'is_recurring' | 'recurrence_rule'>>
 ): Promise<Task | null> {
   await getDb();
 
@@ -134,8 +134,13 @@ export async function updateTask(
 
   for (const [key, value] of Object.entries(data)) {
     if (value !== undefined) {
-      setClauses.push(`${key} = $${paramIndex}`);
-      values.push(value);
+      if (key === 'recurrence_rule') {
+        setClauses.push(`${key} = $${paramIndex}::jsonb`);
+        values.push(value !== null ? JSON.stringify(value) : null);
+      } else {
+        setClauses.push(`${key} = $${paramIndex}`);
+        values.push(value);
+      }
       paramIndex++;
     }
   }

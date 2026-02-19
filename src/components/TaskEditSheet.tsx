@@ -21,6 +21,7 @@ export default function TaskEditSheet({ task, onClose, onUpdated, onDeleted }: T
   const [context, setContext] = useState<TaskContext>(task.context);
   const [timePreference, setTimePreference] = useState<TimePreference>(task.time_preference);
   const [dueDate, setDueDate] = useState(task.due_date || '');
+  const [isRecurring, setIsRecurring] = useState(task.is_recurring);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -41,6 +42,8 @@ export default function TaskEditSheet({ task, onClose, onUpdated, onDeleted }: T
           context,
           time_preference: timePreference,
           due_date: dueDate || null,
+          is_recurring: isRecurring,
+          recurrence_rule: isRecurring ? (task.recurrence_rule || { pattern: 'daily' }) : null,
         }),
       });
 
@@ -198,6 +201,22 @@ export default function TaskEditSheet({ task, onClose, onUpdated, onDeleted }: T
             />
           </div>
         </div>
+
+        {/* Recurring toggle */}
+        <label className="mt-3 flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isRecurring}
+            onChange={(e) => setIsRecurring(e.target.checked)}
+            className="rounded"
+          />
+          <span className="text-sm text-text-primary">Recurring task</span>
+          {isRecurring && (
+            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
+              {task.recurrence_rule?.pattern || 'daily'}
+            </span>
+          )}
+        </label>
 
         {/* Action buttons */}
         <div className="mt-5 flex gap-2">
